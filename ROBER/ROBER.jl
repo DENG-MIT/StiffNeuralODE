@@ -10,6 +10,13 @@ using Flux.Optimise: update!
 using Flux.Losses: mae, mse
 using BSON: @save, @load
 
+
+dir         = @__DIR__
+dir         = dir*"/"
+cd(dir)
+mkpath(dir*"figs")
+mkpath(dir*"checkpoint")
+
 is_restart  = false;
 n_epoch     = 50000;
 ntotal      = 50
@@ -34,7 +41,7 @@ t_end       = tspan[2];
 k           = [0.04, 3e7, 1e4];
 tsteps      = 10 .^ (range(-5, log10(tspan[2]), length=ntotal));
 prob_rober  = ODEProblem(rober!, u0, tspan, k);
-sol_rober   = solve(prob_rober, ode_solver, saveat=tsteps, atol=1.f-8);
+sol_rober   = solve(prob_rober, ode_solver, saveat=tsteps, abstol=1.f-8);
 normdata    = Array(sol_rober)
 
 yscale      = maximum(normdata, dims = 2)  #scale for each species
@@ -60,11 +67,11 @@ function dudt!(du, u, p, t)
 end
 
 prob        = ODEProblem(dudt!, u0[i_slow], tspan)
-sense       = BacksolveAdjoint(checkpointing=true; autojacvec=ZygoteVJP());
+sense       = DiffEqSensitivity.BacksolveAdjoint(checkpointing=true; autojacvec=DiffEqSensitivity.ZygoteVJP());
 function predict_n_ode(p, sample)
     global rep  = re(p)
     _prob       = remake(prob, p=p, tspan=[0, tsteps[sample]])
-    pred        = Array(solve(_prob, ode_solver, saveat=tsteps[1:sample], atol=lb, sensalg=sense))
+    pred        = Array(solve(_prob, ode_solver, saveat=tsteps[1:sample], abstol=lb, sensealg=sense))
 end
 pred        = predict_n_ode(p, ntotal)
 
@@ -110,7 +117,7 @@ cb = function (p, loss_mean, g_norm)
         xlabel!(plt_grad, "Epoch")
         ylabel!(plt_loss, "Loss")
         ylabel!(plt_grad, "Gradient Norm")
-        plt_all = plot([plt_loss, plt_grad]..., framestyle=:box, size = (1000, 400))
+        plt_all = plot([plt_loss, plt_grad]..., framestyle=:box, layout=(1,2))#, size = (1000, 400))
         plot!(plt_all, xtickfontsize=10, ytickfontsize=10, xguidefontsize=12, yguidefontsize=12)
         png(plt_all, "figs/loss_grad")
 
