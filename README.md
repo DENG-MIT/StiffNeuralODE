@@ -8,6 +8,15 @@ This repository contains the source codes of the demonstration examples with Rob
 
 - June 6, 2023: The source code has been updated for compatibility with the updated dependencies such as DiffEqFlux.jl and DiffEqSensitivity.jl.
 
+# Versions of Julia and Dependencies
+
+The source codes were tested with the following environments.
+
+- julia_version = "1.8.4"
+
+- Packages: please check out Project.toml and Manifest.toml.
+
+
 # Citation
 
 If you use the code in your research or if you find our paper useful, please cite [this paper](https://doi.org/10.1063/5.0060697):
